@@ -22,7 +22,7 @@ class TerminalWindow : public virtual AppWindow {
         TerminalDimension termDim;
         termchar_t *grid;
         FontCheckout fnt = loadFont();
-        virtual FontCheckout loadFont() {return font_cache.get({.name="Parallax",.size=16});};
+        virtual FontCheckout loadFont() {return font_cache.get({.name=default_typeface,.size=16});};
         int dirtyXMin, dirtyYMin, dirtyXMax, dirtyYMax;
         void allDirty() {dirty = true; dirtyXMin = INT_MIN, dirtyYMin = INT_MIN, dirtyXMax = INT_MAX, dirtyYMax = INT_MAX;};
         void allClean() {dirty = false; dirtyXMin = INT_MAX, dirtyYMin = INT_MAX, dirtyXMax = INT_MIN, dirtyYMax = INT_MIN;};
@@ -77,7 +77,7 @@ class MainTerminalWindow : public TerminalWindow {
 
 class DebugTerminalWindow : public DebugWindow, TerminalWindow {
     protected:
-        FontProperties using_font = {.name="Parallax",.size=16};
+        FontProperties using_font = {.name=default_typeface,.size=16};
         virtual FontCheckout loadFont() {return font_cache.get(using_font);};
         virtual void parse_setup(const std::string &str);
         virtual void parse_data(const std::string &str);

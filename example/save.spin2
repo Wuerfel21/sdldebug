@@ -1,0 +1,8 @@
+CON
+_CLKFREQ = 10_000_000
+DEBUG_BAUD = 115200
+PUB go() | i
+
+  debug(`TERM MyTerm SIZE 18 3 TEXTSIZE 40 color `($C6697F))
+  debug(`MyTerm 'Sphinx' 13 'of black quartz,' 13 'judge my vows...' save 'save_test')
+  repeat

@@ -7,7 +7,9 @@ TerminalWindow::TerminalWindow() : grid{nullptr}, global_bg{0,0,0},current_fg{0,
 }
 
 MainTerminalWindow::MainTerminalWindow() {
+    global_bg = {0,0,64};
     resize({.cols=40,.rows=25});
+    putChar(0);
 }
 
 DebugTerminalWindow::DebugTerminalWindow(std::string title) : DebugWindow(title),TerminalWindow(),term_colors{default_colors} {
@@ -27,7 +29,7 @@ void TerminalWindow::resize(TerminalDimension newdim) {
         for (int x=0;x<termDim.cols;x++) {
             termchar_t *c = &grid[y*termDim.cols+x];
             if (oldGrid && x<oldDim.cols && y<oldDim.rows) *c = oldGrid[y*oldDim.cols+x];
-            else *c = {.ch=' ',.fg=current_fg,.bg=current_bg};
+            else *c = {.ch=' ',.fg=current_fg,.bg=global_bg};
         }
     }
 
@@ -173,6 +175,8 @@ void DebugTerminalWindow::parse_setup(const std::string &str) {
             using_font.size = size;
             fnt = loadFont();
             allDirty();
+        } else if (casecompare(symbol,"BACKCOLOR")) {
+            global_bg = iter.get_color();
         } else if (casecompare(symbol,"COLOR")) {       
             for(int i = 0;;i++) {
                 std::cout << "alleged color is "<<*iter<<std::endl;
@@ -188,6 +192,7 @@ void DebugTerminalWindow::parse_setup(const std::string &str) {
             while (iter != end && iter.classify() != token_iterator::TOKEN_SYMBOL) ++iter;
         }
     }
+    putChar(0); // Clear it!
 }
 
 void DebugTerminalWindow::parse_data(const std::string &str) {
@@ -208,6 +213,8 @@ void DebugTerminalWindow::parse_data(const std::string &str) {
             auto symbol = iter.get_symbol();
             if (try_parse_common_data_sym(symbol,iter)) {
                 // ok
+            } else if (casecompare(symbol,"CLEAR")) {
+                putChar(0);
             } else {
                 throw token_error("Unhandled symbol \""s+std::string(symbol)+"\" in terminal data");
             }

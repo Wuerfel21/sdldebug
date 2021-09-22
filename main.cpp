@@ -399,12 +399,29 @@ bool DebugWindow::try_parse_common_data_sym(std::string_view symbol, token_itera
     } else if (casecompare(symbol,"UPDATE")) {
         forceRepaint = true;
     } else if (casecompare(symbol,"SAVE")) {
+        repaint(); // Force repaint
         bool window = iter.classify()==token_iterator::TOKEN_SYMBOL && casecompare(*iter,"WINDOW") && (++iter,true);
-        // TODO
+        auto name = iter.get_string("Getting SAVE file name");
+        auto surface = get_save_surface();
+        if (name[0] == '/') throw std::runtime_error("SAVE Path mustn't be absolute");
+        if (name.find("..")!=name.npos) throw std::runtime_error("SAVE Path mustn't contain \"..\"");
+        SDL_SaveBMP(surface,(std::string(name)+".bmp").c_str());
+        dispose_save_surface(surface);
     } else {
         return false;
     }
 
     return true;
+}
+
+SDL_Surface *DebugWindow::get_save_surface() {
+    auto surf = SDL_GetWindowSurface(handle);
+    if (!surf) throw sdl_error("Failed to get window surface for screenshot");
+    if (SDL_LockSurface(surf)) throw sdl_error("Failed to get window surface for screenshot");;
+    return surf;
+}
+
+void DebugWindow::dispose_save_surface(SDL_Surface *surf) {
+    SDL_UnlockSurface(surf);
 }
 

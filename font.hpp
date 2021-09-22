@@ -2,6 +2,8 @@
 #include "main.hpp"
 #include <unordered_map>
 
+const std::string default_typeface = "Parallax";
+
 struct FontProperties {
     const std::string name;
     int size;

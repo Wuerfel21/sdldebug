@@ -130,6 +130,9 @@ class DebugWindow : public virtual AppWindow {
         DebugWindow(std::string title) : AppWindow(), title{title} {};
     protected:
         std::string title;
+
+        virtual SDL_Surface *get_save_surface();
+        virtual void dispose_save_surface(SDL_Surface *surf);
         
         bool try_parse_common_setup_sym(std::string_view symbol, token_iterator &iter);
         bool try_parse_common_data_sym(std::string_view symbol, token_iterator &iter);
