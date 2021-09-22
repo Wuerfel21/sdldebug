@@ -9,7 +9,7 @@ TerminalWindow::TerminalWindow() : grid{nullptr}, global_bg{0,0,0},current_fg{0,
 MainTerminalWindow::MainTerminalWindow() {
     global_bg = {0,0,64};
     resize({.cols=40,.rows=25});
-    putChar(0);
+    clear();
 }
 
 DebugTerminalWindow::DebugTerminalWindow(std::string title) : DebugWindow(title),TerminalWindow(),term_colors{default_colors} {
@@ -40,50 +40,65 @@ void TerminalWindow::resize(TerminalDimension newdim) {
     allDirty();
 }
 
+void TerminalWindow::clear() {
+    for(int y=0;y<termDim.rows;y++)for(int x=0;x<termDim.cols;x++) setCharAt(x,y,{.ch=' ',.fg=current_fg,.bg=global_bg});
+    cursorX = cursorY = 0;
+    lastSpecial = lastNewLine = 0;
+    allDirty();
+}
+
 void TerminalWindow::putChar(wchar_t c) {
-    if (typeid(this) == typeid(DebugTerminalWindow)) std::cout << "got char " << int(c) << std::endl;
-    switch (c) {
-    case 0: // clear+home
-        for(int y=0;y<termDim.rows;y++)for(int x=0;x<termDim.cols;x++) setCharAt(x,y,{.ch=' ',.fg=current_fg,.bg=global_bg});
-        allDirty();
-        // Fall through
-    case 1: // home
-        cursorX = cursorY = 0;
+    wchar_t thisNewLine = 0;
+    wchar_t thisSpecial = 0;
+    switch (lastSpecial) {
+    case 2: // Set cursor X
+        cursorX = std::clamp(int(c),0,termDim.cols-1);
         break;
-    case 2: // set cursor X
-        // TODO
+    case 3: // Set cursor Y
+        cursorY = std::clamp(int(c),0,termDim.rows-1);
         break;
-    case 3: // set cursor Y
-        // TODO
-        break;
-    case 4 ... 7: // set color set
-        selectColors(c-4);
-        break;
-    case 8: // Backspace
-        if (--cursorX < 0) {
-            cursorX = 0;
-            if(cursorY>0)--cursorY;
+    default:
+        switch (c) {
+        case 0: // clear+home
+            clear();
+            break;
+        case 1: // home
+            cursorX = cursorY = 0;
+            break;
+        case 2 ... 3: // set cursor X/Y
+            thisSpecial = c;
+            break;
+        case 4 ... 7: // set color set
+            selectColors(c-4);
+            break;
+        case 8: // Backspace
+            if (--cursorX < 0) {
+                cursorX = 0;
+                if(cursorY>0)--cursorY;
+            }
+            break;
+        case 9: // Tab
+            cursorX = std::clamp((cursorX+8)&~7,0,termDim.cols-1);
+            break;
+        case 10: // == \r
+            newLine();
+            thisNewLine = c;
+            return;
+        case 11 ... 12: break; // Unused?
+        case 13: // == \n
+            if(lastNewLine!=10) newLine();
+            thisNewLine = c;
+            return;
+        case 14 ... 31: break; // Unused?
+        default:
+            if (cursorX >= termDim.cols) newLine();
+            setCharAt(cursorX++,cursorY,c);
+            break;
         }
         break;
-    case 9: // Tab
-        cursorX = std::clamp((cursorX+8)&~7,0,termDim.cols-1);
-        break;
-    case 10: // == \r
-        newLine();
-        lastNewLine = c;
-        return;
-    case 11 ... 12: break; // Unused?
-    case 13: // == \n
-        if(lastNewLine!=10) newLine();
-        lastNewLine = c;
-        return;
-    case 14 ... 31: break; // Unused?
-    default:
-        if (cursorX >= termDim.cols) newLine();
-        setCharAt(cursorX++,cursorY,c);
-        break;
     }
-
+    lastNewLine = thisNewLine;
+    lastSpecial = thisSpecial;
 }
 
 void TerminalWindow::newLine() {
@@ -192,7 +207,7 @@ void DebugTerminalWindow::parse_setup(const std::string &str) {
             while (iter != end && iter.classify() != token_iterator::TOKEN_SYMBOL) ++iter;
         }
     }
-    putChar(0); // Clear it!
+    clear(); // Clear it!
 }
 
 void DebugTerminalWindow::parse_data(const std::string &str) {
@@ -214,7 +229,7 @@ void DebugTerminalWindow::parse_data(const std::string &str) {
             if (try_parse_common_data_sym(symbol,iter)) {
                 // ok
             } else if (casecompare(symbol,"CLEAR")) {
-                putChar(0);
+                clear();
             } else {
                 throw token_error("Unhandled symbol \""s+std::string(symbol)+"\" in terminal data");
             }

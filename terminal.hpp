@@ -31,6 +31,7 @@ class TerminalWindow : public virtual AppWindow {
         // Terminal state
         int cursorX=0,cursorY=0;
         wchar_t lastNewLine=0;
+        wchar_t lastSpecial=0;
 
     public:
         SDL_Color global_bg, current_fg, current_bg;
@@ -56,6 +57,7 @@ class TerminalWindow : public virtual AppWindow {
         void setCharAt(int x,int y,wchar_t c) {
             setCharAt(x,y,{.ch=c,.fg=current_fg,.bg=current_bg});
         }
+        void clear();
         void putChar(wchar_t c);
         void resize(TerminalDimension termDim);
         virtual void selectColors(int i) = 0;
