@@ -1,0 +1,7 @@
+CON
+_CLKFREQ = 10_000_000
+DEBUG_BAUD = 115200
+PUB main() : i
+repeat
+  debug("onek",udec(i++))
+  waitms(100)

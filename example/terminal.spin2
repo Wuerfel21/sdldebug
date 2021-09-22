@@ -1,0 +1,10 @@
+CON
+_CLKFREQ = 10_000_000
+DEBUG_BAUD = 115200
+PUB go() | i
+
+  debug(`TERM MyTerm SIZE 9 1 TEXTSIZE 40 color blue)
+  repeat
+    repeat i from "a" to "z"
+      debug(`MyTerm 1 'IDK? = x' `(i))
+      waitms(200)
