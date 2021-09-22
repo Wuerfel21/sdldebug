@@ -171,14 +171,21 @@ int main(int argc, char* argv[]) {
         }
 
         // Update dirty windows
-        for (const auto & [name, win]  : current_windows) {
-            if (win->isDirty()) {
-                win->repaint();
+        for (auto iter=current_windows.begin();iter!=current_windows.end();) {
+            auto &name = iter->first;
+            auto &win = iter->second;
+            if (win->shouldClose) {
+                iter = current_windows.erase(iter);
+            } else {
+                if(win->shouldRepaint()) {
+                    win->repaint();
+                }
+                ++iter;
             }
         }
 
         // Update main terminal
-        if (terminalWindow->isDirty()) {
+        if (terminalWindow->shouldRepaint()) {
             SDL_Lock lock (terminal_mutex); // Auto unlocks when it goes out of scope
             terminalWindow->repaint();
         }
@@ -214,6 +221,7 @@ void AppWindow::repaint() {
     if (w != dim.width || h != dim.height) SDL_SetWindowSize(handle,dim.width,dim.height);
 
     dirty = false;
+    forceRepaint = false;
 }
 
 AppWindow::~AppWindow() {
@@ -376,6 +384,23 @@ bool DebugWindow::try_parse_common_setup_sym(std::string_view symbol, token_iter
     } else if (casecompare(symbol,"TITLE")) {
         title = iter.get_string("Getting TITLE");
         dirty = true;
+    } else if (casecompare(symbol,"UPDATE")) {
+        lazyRepaint = true;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+bool DebugWindow::try_parse_common_data_sym(std::string_view symbol, token_iterator &iter) {
+    if (casecompare(symbol,"CLOSE")) {
+        shouldClose = true;
+    } else if (casecompare(symbol,"UPDATE")) {
+        forceRepaint = true;
+    } else if (casecompare(symbol,"SAVE")) {
+        bool window = iter.classify()==token_iterator::TOKEN_SYMBOL && casecompare(*iter,"WINDOW") && (++iter,true);
+        // TODO
     } else {
         return false;
     }

@@ -101,6 +101,7 @@ class AppWindow {
         bool idMatchesWindow(uint32_t winID) {
             return SDL_GetWindowID(handle) == winID;
         };
+        bool shouldClose = false;
 
 
         AppWindow();
@@ -108,11 +109,13 @@ class AppWindow {
         virtual void repaint();
         virtual bool handleWindowEvent(SDL_Event &ev) {return false;};
 
-        bool isDirty() {return dirty;};
+        bool shouldRepaint() {return (dirty && !lazyRepaint) || forceRepaint;};
 
     protected:
         SDL_Window *handle = nullptr;
         bool dirty = true;
+        bool forceRepaint = true;
+        bool lazyRepaint = false;
         
         virtual uint32_t getWindowFlags() {
             return 0;
@@ -129,6 +132,7 @@ class DebugWindow : public virtual AppWindow {
         std::string title;
         
         bool try_parse_common_setup_sym(std::string_view symbol, token_iterator &iter);
+        bool try_parse_common_data_sym(std::string_view symbol, token_iterator &iter);
 };
 
 // For C++ RAII magic

@@ -11,3 +11,5 @@ PUB go() | i
         debug(`TERM MyTerm SIZE 9 1 TEXTSIZE 40 color red)
       debug(`MyTerm 1 'IDK? = x' `(i))
       waitms(200)
+    debug(`MyTerm close)
+    waitms(1000)

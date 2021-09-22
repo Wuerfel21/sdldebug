@@ -204,8 +204,16 @@ void DebugTerminalWindow::parse_data(const std::string &str) {
                 putChar(c);
             }
             break;
+        case token_iterator::TOKEN_SYMBOL: {
+            auto symbol = iter.get_symbol();
+            if (try_parse_common_data_sym(symbol,iter)) {
+                // ok
+            } else {
+                throw token_error("Unhandled symbol \""s+std::string(symbol)+"\" in terminal data");
+            }
+        } break;
         default:
-            std::cerr << "unhandled token\n";
+            throw token_error("Erroneous terminal data token");
             ++iter;
         }
     }
